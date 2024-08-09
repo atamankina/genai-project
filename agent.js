@@ -1,8 +1,4 @@
-import OpenAI from "openai";
-import dotenv from "dotenv";
-
-dotenv.config();
-const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY})
+import { getStream } from "./utils.js";
 
 export class Agent {
     constructor(personality) {
@@ -16,21 +12,20 @@ export class Agent {
     async simulateObservation(currentTime) {
 
         const messages = [{ role: "system", content: this.personality },
-            { role: "user", content: `Stelle dir vor, du bist diese Person: ${this.personality}. Es ist ${currentTime} jetzt. Deine letzten Beobachtungen sind ${this.observations}. Deine letzten Handlungen sind ${this.actions}. Basierend darauf, was gerade passiert, was du gerade gemacht hast und deinen letzten Beobachtungen, beschreibe deine Beobachtungen zu diesem Zeitpunkt. Sei kurz, schreibe maximal 2 Sätze.` }
+            { role: "user", content: `Stelle dir vor, du bist diese Person: ${this.personality}. Es ist ${currentTime} jetzt. Deine letzten Beobachtungen sind ${this.observations.join(', ')}. Deine letzten Handlungen sind ${this.actions.join(', ')}. Basierend darauf, was gerade passiert, was du gerade gemacht hast und deinen letzten Beobachtungen, beschreibe deine Beobachtungen zu diesem Zeitpunkt. Sei kurz, schreibe maximal 2 Sätze.` }
         ];
 
-        const responseStream = await openai.chat.completions.create({
-            messages,
-            model: "gpt-3.5-turbo",
-            stream: true
-          });
-        
-        for await (const part of responseStream) {
-            const delta = part.choices[0].delta;
-            if (delta && delta.content) {
-                process.stdout.write(delta.content);
-            }
-        }
+        const observation = await getStream(messages);
+        this.observations.push(observation);
     }
 
+    async simulateAction(currentTime) {
+
+        const messages = [{ role: "system", content: this.personality },
+            { role: "user", content: `Stelle dir vor, du bist diese Person: ${this.personality}. Es ist ${currentTime} jetzt. Deine letzten Beobachtungen sind ${this.observations.join(', ')}. Deine letzten Handlungen sind ${this.actions.join(', ')}. Basierend darauf, was gerade passiert, was du gerade gemacht hast und deinen letzten Beobachtungen, was machst du als nächstes? Sei kurz, schreibe maximal 1 Satz.` }
+        ];
+
+        const action = await getStream(messages);
+        this.actions.push(action);
+    }
 }
