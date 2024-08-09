@@ -10,9 +10,9 @@ async function simulateDay(){
 
         console.log(currentTime);
         await agent.simulateObservation(currentTime);
-        console.log('/n');
+        console.log('\n');
         await agent.simulateAction(currentTime);
-        console.log('/n');
+        console.log('\n');
         currentTime.setMinutes(currentTime.getMinutes() + 30);
     }
 
